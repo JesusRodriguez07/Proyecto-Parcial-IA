@@ -1,7 +1,7 @@
 # Proyecto-parcial-IA
 
-## Nombre
+## jesus rodriguez
 
-## Matrícula
+## 12-sisn-2-043
 
 ## Proyecto
