@@ -1,6 +1,7 @@
 # main.py - Entrada principal del juego
 import pygame
 from scripts.menu import Menu
+from scripts.jugador import Jugador
 
 def main():
     pygame.init()
@@ -12,16 +13,22 @@ def main():
     action = menu.run()
 
     if action == "start":
-        # Aquí arrancaría el bucle del juego 
+        jugador = Jugador(400, 300)
+        all_sprites = pygame.sprite.Group()
+        all_sprites.add(jugador)
+
         running = True
         clock = pygame.time.Clock()
         while running:
             screen.fill((30, 30, 30))
+            keys = pygame.key.get_pressed()
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
 
-            # Aquí iría la lógica del juego (jugador, enemigos, IA, etc.)
+            all_sprites.update(keys)
+            all_sprites.draw(screen)
             pygame.display.flip()
             clock.tick(60)
 
