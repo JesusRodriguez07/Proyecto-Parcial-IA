@@ -172,3 +172,51 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Archivos de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+# Entornos virtuales (si usas venv)
+env/
+venv/
+ENV/
+.venv/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de compilación o binarios (por si acaso)
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Archivos multimedia grandes (para evitar subir videos, etc.)
+*.mp4
+*.mov
+*.avi
+*.flv
+*.mkv
+*.zip
+*.rar
+*.7z
+
+# Configuraciones locales de VS Code y otros editores
+.vscode/
+.idea/
+*.swp
+
+# Archivos de pruebas temporales
+*.tmp
+*.bak
+
+# Archivos específicos del juego
+*.sav
+*.db
+*.cache
+
