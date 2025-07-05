@@ -1,20 +1,23 @@
-# menu.py - Menú principal del juego
+# pause_menu.py - Menú de pausa dentro del juego
 import pygame
 import sys
 import time
 
-class Menu:
-    def __init__(self, screen, joystick=None):
+class PauseMenu:
+    def __init__(self, screen):
         self.screen = screen
-        self.joystick = joystick
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(None, 48)
-        self.options = ["Iniciar Juego", "Salir"]
+        self.options = ["Reanudar", "Salir al Menú Principal"]
         self.selected_index = 0
-        self.last_move_time = 0  # Para evitar múltiples saltos rápidos
+        self.last_move_time = 0
 
     def draw(self):
-        self.screen.fill((0, 0, 0))
+        overlay = pygame.Surface(self.screen.get_size())
+        overlay.set_alpha(180)
+        overlay.fill((0, 0, 0))
+        self.screen.blit(overlay, (0, 0))
+
         for i, option in enumerate(self.options):
             color = (255, 0, 0) if i == self.selected_index else (255, 255, 255)
             text = self.font.render(option, True, color)
@@ -22,7 +25,7 @@ class Menu:
             self.screen.blit(text, rect)
         pygame.display.flip()
 
-    def run(self):
+    def run(self, joystick=None):
         while True:
             self.draw()
             now = time.time()
@@ -36,13 +39,12 @@ class Menu:
                     elif event.key == pygame.K_DOWN:
                         self.selected_index = (self.selected_index + 1) % len(self.options)
                     elif event.key == pygame.K_RETURN:
-                        return "start" if self.selected_index == 0 else "quit"
+                        return "resume" if self.selected_index == 0 else "menu"
 
-            # Lectura del joystick
-            if self.joystick:
+            if joystick:
                 hat = (0, 0)
-                if self.joystick.get_numhats() > 0:
-                    hat = self.joystick.get_hat(0)
+                if joystick.get_numhats() > 0:
+                    hat = joystick.get_hat(0)
 
                 if hat[1] == 1 and now - self.last_move_time > 0.3:
                     self.selected_index = (self.selected_index - 1) % len(self.options)
@@ -51,8 +53,7 @@ class Menu:
                     self.selected_index = (self.selected_index + 1) % len(self.options)
                     self.last_move_time = now
 
-                # Movimiento con joystick analógico (eje 1 vertical)
-                axis_y = self.joystick.get_axis(1)
+                axis_y = joystick.get_axis(1)
                 if axis_y < -0.5 and now - self.last_move_time > 0.3:
                     self.selected_index = (self.selected_index - 1) % len(self.options)
                     self.last_move_time = now
@@ -60,9 +61,7 @@ class Menu:
                     self.selected_index = (self.selected_index + 1) % len(self.options)
                     self.last_move_time = now
 
-                if self.joystick.get_button(1):
-                    return "start" if self.selected_index == 0 else "quit"
-                if self.joystick.get_button(2):
-                    return "quit"
+                if joystick.get_button(1):
+                    return "resume" if self.selected_index == 0 else "menu"
 
             self.clock.tick(30)
