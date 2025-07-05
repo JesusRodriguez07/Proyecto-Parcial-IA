@@ -1,68 +1,82 @@
-# menu.py - Menú principal del juego
 import pygame
 import sys
-import time
 
 class Menu:
     def __init__(self, screen, joystick=None):
         self.screen = screen
         self.joystick = joystick
-        self.clock = pygame.time.Clock()
-        self.font = pygame.font.SysFont(None, 48)
-        self.options = ["Iniciar Juego", "Salir"]
-        self.selected_index = 0
-        self.last_move_time = 0  # Para evitar múltiples saltos rápidos
+        self.options = ["Iniciar juego", "Salir"]
+        self.selected = 0
+        self.font = pygame.font.Font(None, 60)
+        self.hat_cooldown = 0
+        self.axis_cooldown = 0
 
     def draw(self):
         self.screen.fill((0, 0, 0))
+        title = self.font.render("Robotron 2084", True, (255, 255, 255))
+        self.screen.blit(title, (self.screen.get_width() // 2 - title.get_width() // 2, 100))
+
         for i, option in enumerate(self.options):
-            color = (255, 0, 0) if i == self.selected_index else (255, 255, 255)
+            color = (255, 255, 0) if i == self.selected else (180, 180, 180)
             text = self.font.render(option, True, color)
-            rect = text.get_rect(center=(400, 250 + i * 60))
-            self.screen.blit(text, rect)
+            x = self.screen.get_width() // 2 - text.get_width() // 2
+            y = 200 + i * 70
+            self.screen.blit(text, (x, y))
+
         pygame.display.flip()
 
     def run(self):
+        clock = pygame.time.Clock()
+        self.hat_cooldown = 0
+        self.axis_cooldown = 0
+
         while True:
             self.draw()
-            now = time.time()
+
+            # D-pad
+            if self.joystick and self.joystick.get_numhats() > 0:
+                hat = self.joystick.get_hat(0)
+                if self.hat_cooldown == 0:
+                    if hat[1] == 1:
+                        self.selected = (self.selected - 1) % len(self.options)
+                        self.hat_cooldown = 6
+                    elif hat[1] == -1:
+                        self.selected = (self.selected + 1) % len(self.options)
+                        self.hat_cooldown = 6
+                elif hat[1] == 0:
+                    self.hat_cooldown = max(0, self.hat_cooldown - 1)
+
+            # Stick analógico
+            if self.joystick:
+                axis_y = self.joystick.get_axis(1)
+                if self.axis_cooldown == 0:
+                    if axis_y < -0.6:
+                        self.selected = (self.selected - 1) % len(self.options)
+                        self.axis_cooldown = 6
+                    elif axis_y > 0.6:
+                        self.selected = (self.selected + 1) % len(self.options)
+                        self.axis_cooldown = 6
+                elif abs(axis_y) < 0.3:
+                    self.axis_cooldown = max(0, self.axis_cooldown - 1)
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-                elif event.type == pygame.KEYDOWN:
+
+                # Teclado
+                if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_UP:
-                        self.selected_index = (self.selected_index - 1) % len(self.options)
+                        self.selected = (self.selected - 1) % len(self.options)
                     elif event.key == pygame.K_DOWN:
-                        self.selected_index = (self.selected_index + 1) % len(self.options)
+                        self.selected = (self.selected + 1) % len(self.options)
                     elif event.key == pygame.K_RETURN:
-                        return "start" if self.selected_index == 0 else "quit"
+                        return "start" if self.selected == 0 else "exit"
 
-            # Lectura del joystick
-            if self.joystick:
-                hat = (0, 0)
-                if self.joystick.get_numhats() > 0:
-                    hat = self.joystick.get_hat(0)
+                # Gamepad botones (X o Cuadrado)
+                if event.type == pygame.JOYBUTTONDOWN:
+                    if event.button in [0, 1]:
+                        return "start" if self.selected == 0 else "exit"
 
-                if hat[1] == 1 and now - self.last_move_time > 0.3:
-                    self.selected_index = (self.selected_index - 1) % len(self.options)
-                    self.last_move_time = now
-                elif hat[1] == -1 and now - self.last_move_time > 0.3:
-                    self.selected_index = (self.selected_index + 1) % len(self.options)
-                    self.last_move_time = now
+            clock.tick(60)
 
-                # Movimiento con joystick analógico (eje 1 vertical)
-                axis_y = self.joystick.get_axis(1)
-                if axis_y < -0.5 and now - self.last_move_time > 0.3:
-                    self.selected_index = (self.selected_index - 1) % len(self.options)
-                    self.last_move_time = now
-                elif axis_y > 0.5 and now - self.last_move_time > 0.3:
-                    self.selected_index = (self.selected_index + 1) % len(self.options)
-                    self.last_move_time = now
-
-                if self.joystick.get_button(1):
-                    return "start" if self.selected_index == 0 else "quit"
-                if self.joystick.get_button(2):
-                    return "quit"
-
-            self.clock.tick(30)
