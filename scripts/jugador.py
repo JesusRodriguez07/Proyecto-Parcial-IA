@@ -10,11 +10,12 @@ class Jugador(pygame.sprite.Sprite):
 
         # Cada sprite mide 16x16 y están alineados horizontalmente
         self.sprites = {
-            'up': sprite_sheet.subsurface((0, 0, 16, 16)),
-            'down': sprite_sheet.subsurface((16, 0, 16, 16)),
-            'left': sprite_sheet.subsurface((32, 0, 16, 16)),
-            'right': sprite_sheet.subsurface((48, 0, 16, 16)),
-        }
+        'up': sprite_sheet.subsurface((0, 0, 24, 24)),
+        'down': sprite_sheet.subsurface((24, 0, 24, 24)),
+        'left': sprite_sheet.subsurface((48, 0, 24, 24)),
+        'right': sprite_sheet.subsurface((72, 0, 24, 24)),
+}
+
 
         self.direction = "down"
         self.image = self.sprites[self.direction]  # sin escalar

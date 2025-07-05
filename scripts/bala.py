@@ -4,8 +4,8 @@ class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, direction):
         super().__init__()
         self.image = pygame.image.load("assets/images/bullet.png").convert_alpha()
-        self.image = pygame.transform.scale(self.image, (8, 8))
         self.rect = self.image.get_rect(center=(x, y))
+
         self.speed = 10
         self.direction = direction
 
@@ -23,4 +23,5 @@ class Bullet(pygame.sprite.Sprite):
         if (self.rect.bottom < 0 or self.rect.top > 600 or
             self.rect.right < 0 or self.rect.left > 800):
             self.kill()
+
 
