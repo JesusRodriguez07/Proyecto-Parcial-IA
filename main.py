@@ -1,4 +1,4 @@
-# main.py completo actualizado
+# main.py actualizado con humanos que se mueven
 # Autor: jesus rodriguez - 12-sisn-2-043
 
 import pygame
@@ -52,6 +52,8 @@ def main():
 
     enemigos_por_nivel = 6
     velocidad_base = 2
+    puntaje = 0
+
     mostrar_nivel(screen, nivel)
 
     # Generar humanos
@@ -68,7 +70,6 @@ def main():
     enemigos_generados = 0
     paused = False
     running = True
-    puntaje = 0
 
     while running:
         clock.tick(60)
@@ -116,6 +117,7 @@ def main():
 
         bullets.update()
         explosiones.update()
+        humanos.update()
 
         # Verificar rescates
         rescatados = pygame.sprite.spritecollide(jugador, humanos, dokill=True)
