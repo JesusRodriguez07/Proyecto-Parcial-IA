@@ -1,3 +1,6 @@
+# main.py completo actualizado
+# Autor: jesus rodriguez - 12-sisn-2-043
+
 import pygame
 import random
 from scripts.jugador import Jugador
@@ -6,6 +9,7 @@ from scripts.menu import Menu
 from scripts.pause_menu import PauseMenu
 from scripts.enemigo import Enemigo
 from scripts.explosion import Explosion
+from scripts.humano import Humano
 
 def mostrar_nivel(screen, nivel):
     font = pygame.font.Font(None, 64)
@@ -42,6 +46,7 @@ def main():
     bullets = pygame.sprite.Group()
     enemigos = pygame.sprite.Group()
     explosiones = pygame.sprite.Group()
+    humanos = pygame.sprite.Group()
     mapa_vacio = [[0 for _ in range(25)] for _ in range(20)]
     pausa = PauseMenu(screen, joystick)
 
@@ -49,10 +54,21 @@ def main():
     velocidad_base = 2
     mostrar_nivel(screen, nivel)
 
+    # Generar humanos
+    for _ in range(random.randint(3, 5)):
+        while True:
+            hx = random.randint(50, 750)
+            hy = random.randint(50, 550)
+            if abs(hx - jugador.rect.centerx) > 80 and abs(hy - jugador.rect.centery) > 80:
+                break
+        humano = Humano(hx, hy)
+        humanos.add(humano)
+
     tiempo_ultimo_spawn = pygame.time.get_ticks()
     enemigos_generados = 0
     paused = False
     running = True
+    puntaje = 0
 
     while running:
         clock.tick(60)
@@ -101,6 +117,14 @@ def main():
         bullets.update()
         explosiones.update()
 
+        # Verificar rescates
+        rescatados = pygame.sprite.spritecollide(jugador, humanos, dokill=True)
+        puntaje += 1000 * len(rescatados)
+
+        # Humanos eliminados por enemigos
+        for enemigo in enemigos:
+            pygame.sprite.spritecollide(enemigo, humanos, dokill=True)
+
         if enemigos_generados < enemigos_por_nivel:
             if ahora - tiempo_ultimo_spawn > 600:
                 while True:
@@ -122,11 +146,17 @@ def main():
 
         screen.fill((0, 0, 0))
         screen.blit(jugador.image, jugador.rect)
+        humanos.draw(screen)
         bullets.draw(screen)
         for enemigo in enemigos:
             if screen.get_rect().colliderect(enemigo.rect):
                 screen.blit(enemigo.image, enemigo.rect)
         explosiones.draw(screen)
+
+        # Mostrar puntaje
+        font = pygame.font.Font(None, 36)
+        texto_puntos = font.render(f"Puntaje: {puntaje}", True, (255, 255, 255))
+        screen.blit(texto_puntos, (10, 10))
 
         pygame.display.flip()
 
@@ -138,6 +168,17 @@ def main():
             mostrar_nivel(screen, nivel)
             enemigos_generados = 0
             tiempo_ultimo_spawn = pygame.time.get_ticks()
+
+            # Regenerar humanos para nuevo nivel
+            humanos.empty()
+            for _ in range(random.randint(3, 5)):
+                while True:
+                    hx = random.randint(50, 750)
+                    hy = random.randint(50, 550)
+                    if abs(hx - jugador.rect.centerx) > 80 and abs(hy - jugador.rect.centery) > 80:
+                        break
+                humano = Humano(hx, hy)
+                humanos.add(humano)
 
 if __name__ == "__main__":
     main()
