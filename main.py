@@ -1,4 +1,4 @@
-# main.py actualizado con humanos que se mueven
+# main.py actualizado para que los enemigos reciban grupo de humanos como objetivo secundario
 # Autor: jesus rodriguez - 12-sisn-2-043
 
 import pygame
@@ -26,7 +26,6 @@ def main():
     pygame.display.set_caption("Robotron IA - Examen Final")
     clock = pygame.time.Clock()
 
-    # 🎮 Gamepad setup
     pygame.joystick.init()
     joystick = None
     if pygame.joystick.get_count() > 0:
@@ -40,7 +39,6 @@ def main():
     if action != "start":
         return
 
-    # ▶️ Entra al juego
     nivel = 1
     jugador = Jugador(400, 300)
     bullets = pygame.sprite.Group()
@@ -56,7 +54,6 @@ def main():
 
     mostrar_nivel(screen, nivel)
 
-    # Generar humanos
     for _ in range(random.randint(3, 5)):
         while True:
             hx = random.randint(50, 750)
@@ -119,11 +116,9 @@ def main():
         explosiones.update()
         humanos.update()
 
-        # Verificar rescates
         rescatados = pygame.sprite.spritecollide(jugador, humanos, dokill=True)
         puntaje += 1000 * len(rescatados)
 
-        # Humanos eliminados por enemigos
         for enemigo in enemigos:
             pygame.sprite.spritecollide(enemigo, humanos, dokill=True)
 
@@ -134,7 +129,7 @@ def main():
                     ey = random.randint(50, 550)
                     if abs(ex - jugador.rect.centerx) > 100 and abs(ey - jugador.rect.centery) > 100:
                         break
-                enemigo = Enemigo(ex, ey, jugador, mapa_vacio)
+                enemigo = Enemigo(ex, ey, jugador, mapa_vacio, humanos)
                 enemigo.velocidad = velocidad_base + (nivel * 0.5)
                 enemigos.add(enemigo)
                 enemigos_generados += 1
@@ -155,14 +150,12 @@ def main():
                 screen.blit(enemigo.image, enemigo.rect)
         explosiones.draw(screen)
 
-        # Mostrar puntaje
         font = pygame.font.Font(None, 36)
         texto_puntos = font.render(f"Puntaje: {puntaje}", True, (255, 255, 255))
         screen.blit(texto_puntos, (10, 10))
 
         pygame.display.flip()
 
-        # ✅ Check: avanzar de nivel
         if enemigos_generados == enemigos_por_nivel and len(enemigos) == 0:
             nivel += 1
             enemigos_por_nivel += 4
@@ -171,7 +164,6 @@ def main():
             enemigos_generados = 0
             tiempo_ultimo_spawn = pygame.time.get_ticks()
 
-            # Regenerar humanos para nuevo nivel
             humanos.empty()
             for _ in range(random.randint(3, 5)):
                 while True:
