@@ -1,4 +1,5 @@
 import pygame
+import random
 from scripts.jugador import Jugador
 from scripts.bala import Bullet
 from scripts.menu import Menu
@@ -6,15 +7,22 @@ from scripts.pause_menu import PauseMenu
 from scripts.enemigo import Enemigo
 from scripts.explosion import Explosion
 
-def crear_mapa_dummy():
-    return [[0 for _ in range(25)] for _ in range(20)]
+def mostrar_nivel(screen, nivel):
+    font = pygame.font.Font(None, 64)
+    texto = font.render(f"Nivel {nivel}", True, (255, 255, 0))
+    rect = texto.get_rect(center=(400, 300))
+    screen.fill((0, 0, 0))
+    screen.blit(texto, rect)
+    pygame.display.flip()
+    pygame.time.delay(2000)
 
 def main():
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption("Robotron 2084 - Examen IA")
+    pygame.display.set_caption("Robotron IA - Examen Final")
     clock = pygame.time.Clock()
 
+    # 🎮 Gamepad setup
     pygame.joystick.init()
     joystick = None
     if pygame.joystick.get_count() > 0:
@@ -25,86 +33,111 @@ def main():
     menu = Menu(screen, joystick)
     action = menu.run()
 
-    if action == "start":
-        jugador = Jugador(400, 300)
-        bullets = pygame.sprite.Group()
-        enemigos = pygame.sprite.Group()
-        explosiones = pygame.sprite.Group()
+    if action != "start":
+        return
 
-        mapa = crear_mapa_dummy()
+    # ▶️ Entra al juego
+    nivel = 1
+    jugador = Jugador(400, 300)
+    bullets = pygame.sprite.Group()
+    enemigos = pygame.sprite.Group()
+    explosiones = pygame.sprite.Group()
+    mapa_vacio = [[0 for _ in range(25)] for _ in range(20)]
+    pausa = PauseMenu(screen, joystick)
 
-        for i in range(3):
-            enemigo = Enemigo(100 + i * 60, 100, jugador, mapa)
-            enemigos.add(enemigo)
+    enemigos_por_nivel = 6
+    velocidad_base = 2
+    mostrar_nivel(screen, nivel)
 
-        pause_menu = PauseMenu(screen, joystick)
-        paused = False
-        running = True
+    tiempo_ultimo_spawn = pygame.time.get_ticks()
+    enemigos_generados = 0
+    paused = False
+    running = True
 
-        while running:
-            screen.fill((0, 0, 0))  # fondo negro
+    while running:
+        clock.tick(60)
+        ahora = pygame.time.get_ticks()
 
-            keys = pygame.key.get_pressed()
-            dx = dy = 0
+        dx = dy = 0
+        keys = pygame.key.get_pressed()
 
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                    paused = True
-                if event.type == pygame.JOYBUTTONDOWN and event.button == 9:
-                    paused = True
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                paused = True
+            elif event.type == pygame.JOYBUTTONDOWN and event.button == 9:
+                paused = True
 
-            if paused:
+        if paused:
+            opcion = pausa.run()
+            if opcion == "resume":
                 paused = False
-                pause_action = pause_menu.run()
-                if pause_action == "resume":
-                    continue
-                elif pause_action == "menu":
-                    main()
-                    return
-                elif pause_action == "quit":
-                    running = False
-                    break
+                continue
+            elif opcion == "menu":
+                main()
+                return
+            elif opcion == "exit":
+                running = False
+                break
 
-            if keys[pygame.K_LEFT]: dx = -1
-            if keys[pygame.K_RIGHT]: dx = 1
-            if keys[pygame.K_UP]: dy = -1
-            if keys[pygame.K_DOWN]: dy = 1
+        if keys[pygame.K_LEFT]: dx = -1
+        if keys[pygame.K_RIGHT]: dx = 1
+        if keys[pygame.K_UP]: dy = -1
+        if keys[pygame.K_DOWN]: dy = 1
 
-            if joystick:
-                axis_x = joystick.get_axis(0)
-                axis_y = joystick.get_axis(1)
-                threshold = 0.3
-                if abs(axis_x) > threshold:
-                    dx = int(axis_x / abs(axis_x))
-                if abs(axis_y) > threshold:
-                    dy = int(axis_y / abs(axis_y))
+        if joystick:
+            axis_x = joystick.get_axis(0)
+            axis_y = joystick.get_axis(1)
+            if abs(axis_x) > 0.3: dx = int(axis_x / abs(axis_x))
+            if abs(axis_y) > 0.3: dy = int(axis_y / abs(axis_y))
 
-            jugador.update(keys, dx, dy, bullets, joystick)
-            bullets.update()
-            enemigos.update()
-            explosiones.update()
+        jugador.update(keys, dx, dy, bullets, joystick)
 
-            # Colisiones: balas vs enemigos
-            for bala in bullets:
-                impactados = pygame.sprite.spritecollide(bala, enemigos, True)
-                if impactados:
-                    bala.kill()
-                    for enemigo in impactados:
-                        explosion = Explosion(enemigo.rect.centerx, enemigo.rect.centery)
-                        explosiones.add(explosion)
+        for i, enemigo in enumerate(enemigos):
+            if ahora % 2 == i % 2:
+                enemigo.update()
 
-            screen.blit(jugador.image, jugador.rect)
-            bullets.draw(screen)
-            enemigos.draw(screen)
-            explosiones.draw(screen)
+        bullets.update()
+        explosiones.update()
 
-            pygame.display.flip()
-            clock.tick(60)
+        if enemigos_generados < enemigos_por_nivel:
+            if ahora - tiempo_ultimo_spawn > 600:
+                while True:
+                    ex = random.randint(50, 750)
+                    ey = random.randint(50, 550)
+                    if abs(ex - jugador.rect.centerx) > 100 and abs(ey - jugador.rect.centery) > 100:
+                        break
+                enemigo = Enemigo(ex, ey, jugador, mapa_vacio)
+                enemigo.velocidad = velocidad_base + (nivel * 0.5)
+                enemigos.add(enemigo)
+                enemigos_generados += 1
+                tiempo_ultimo_spawn = ahora
 
-    pygame.quit()
+        for bullet in bullets:
+            impactos = pygame.sprite.spritecollide(bullet, enemigos, dokill=True)
+            for enemigo in impactos:
+                explosiones.add(Explosion(enemigo.rect.centerx, enemigo.rect.centery))
+                bullet.kill()
+
+        screen.fill((0, 0, 0))
+        screen.blit(jugador.image, jugador.rect)
+        bullets.draw(screen)
+        for enemigo in enemigos:
+            if screen.get_rect().colliderect(enemigo.rect):
+                screen.blit(enemigo.image, enemigo.rect)
+        explosiones.draw(screen)
+
+        pygame.display.flip()
+
+        # ✅ Check: avanzar de nivel
+        if enemigos_generados == enemigos_por_nivel and len(enemigos) == 0:
+            nivel += 1
+            enemigos_por_nivel += 4
+            velocidad_base += 0.2
+            mostrar_nivel(screen, nivel)
+            enemigos_generados = 0
+            tiempo_ultimo_spawn = pygame.time.get_ticks()
 
 if __name__ == "__main__":
     main()
-

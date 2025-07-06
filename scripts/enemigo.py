@@ -3,9 +3,15 @@ from scripts.a_estrella import a_estrella
 from scripts.arbol_comportamiento import Selector, Secuencia, Condicion, Accion
 
 class Enemigo(pygame.sprite.Sprite):
+    enemy_sprite = None
+
     def __init__(self, x, y, jugador, mapa):
         super().__init__()
-        self.image = pygame.image.load("assets/sprites/enemy.png").convert_alpha()
+
+        if Enemigo.enemy_sprite is None:
+            Enemigo.enemy_sprite = pygame.image.load("assets/sprites/enemy.png").convert_alpha()
+
+        self.image = Enemigo.enemy_sprite
         self.rect = self.image.get_rect(center=(x, y))
 
         self.jugador = jugador
@@ -14,6 +20,7 @@ class Enemigo(pygame.sprite.Sprite):
         self.grid_size = 24
         self.camino = []
         self.tiempo_ruta = 0
+        self.objetivo_actual = None
 
         self.arbol = Selector([
             Secuencia([
@@ -36,11 +43,19 @@ class Enemigo(pygame.sprite.Sprite):
 
     def buscar_con_a_estrella(self):
         now = pygame.time.get_ticks()
-        if not self.camino or now - self.tiempo_ruta > 1000:
+        jugador_pos = (self.jugador.rect.centerx // self.grid_size, self.jugador.rect.centery // self.grid_size)
+
+        if (self.objetivo_actual != jugador_pos) or (now - self.tiempo_ruta > 5000):  # ⚙️ 5 segundos
             inicio = (self.rect.centerx // self.grid_size, self.rect.centery // self.grid_size)
-            objetivo = (self.jugador.rect.centerx // self.grid_size, self.jugador.rect.centery // self.grid_size)
+            objetivo = jugador_pos
             ruta = a_estrella(self.mapa, inicio, objetivo)
-            self.camino = ruta[1:] if ruta else []
+
+            if ruta and len(ruta) > 1:
+                self.camino = ruta[1:]
+            else:
+                self.camino = [(objetivo[0], objetivo[1])]  # fallback al jugador
+
+            self.objetivo_actual = objetivo
             self.tiempo_ruta = now
 
         if self.camino:
