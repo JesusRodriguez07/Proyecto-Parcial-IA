@@ -1,4 +1,4 @@
-# main.py actualizado para que los enemigos reciban grupo de humanos como objetivo secundario
+# main.py actualizado con disparadores usando grupo global de balas
 # Autor: jesus rodriguez - 12-sisn-2-043
 
 import pygame
@@ -8,6 +8,7 @@ from scripts.bala import Bullet
 from scripts.menu import Menu
 from scripts.pause_menu import PauseMenu
 from scripts.enemigo import Enemigo
+from scripts.enemigo_disparo import EnemigoDisparo
 from scripts.explosion import Explosion
 from scripts.humano import Humano
 
@@ -43,6 +44,8 @@ def main():
     jugador = Jugador(400, 300)
     bullets = pygame.sprite.Group()
     enemigos = pygame.sprite.Group()
+    disparadores = pygame.sprite.Group()
+    balas_enemigas = pygame.sprite.Group()
     explosiones = pygame.sprite.Group()
     humanos = pygame.sprite.Group()
     mapa_vacio = [[0 for _ in range(25)] for _ in range(20)]
@@ -112,7 +115,11 @@ def main():
             if ahora % 2 == i % 2:
                 enemigo.update()
 
+        for disparador in disparadores:
+            disparador.update()
+
         bullets.update()
+        balas_enemigas.update()
         explosiones.update()
         humanos.update()
 
@@ -122,6 +129,9 @@ def main():
         for enemigo in enemigos:
             pygame.sprite.spritecollide(enemigo, humanos, dokill=True)
 
+        for disparador in disparadores:
+            pygame.sprite.spritecollide(disparador, humanos, dokill=True)
+
         if enemigos_generados < enemigos_por_nivel:
             if ahora - tiempo_ultimo_spawn > 600:
                 while True:
@@ -129,9 +139,15 @@ def main():
                     ey = random.randint(50, 550)
                     if abs(ex - jugador.rect.centerx) > 100 and abs(ey - jugador.rect.centery) > 100:
                         break
-                enemigo = Enemigo(ex, ey, jugador, mapa_vacio, humanos)
-                enemigo.velocidad = velocidad_base + (nivel * 0.5)
-                enemigos.add(enemigo)
+
+                if nivel >= 2 and random.random() < min(0.2 + nivel * 0.05, 0.5):
+                    enemigo = EnemigoDisparo(ex, ey, jugador, balas_enemigas)
+                    disparadores.add(enemigo)
+                else:
+                    enemigo = Enemigo(ex, ey, jugador, mapa_vacio, humanos)
+                    enemigo.velocidad = velocidad_base + (nivel * 0.5)
+                    enemigos.add(enemigo)
+
                 enemigos_generados += 1
                 tiempo_ultimo_spawn = ahora
 
@@ -141,13 +157,25 @@ def main():
                 explosiones.add(Explosion(enemigo.rect.centerx, enemigo.rect.centery))
                 bullet.kill()
 
+            impactos2 = pygame.sprite.spritecollide(bullet, disparadores, dokill=True)
+            for enemigo in impactos2:
+                explosiones.add(Explosion(enemigo.rect.centerx, enemigo.rect.centery))
+                bullet.kill()
+
         screen.fill((0, 0, 0))
         screen.blit(jugador.image, jugador.rect)
         humanos.draw(screen)
         bullets.draw(screen)
+        balas_enemigas.draw(screen)
+
         for enemigo in enemigos:
             if screen.get_rect().colliderect(enemigo.rect):
                 screen.blit(enemigo.image, enemigo.rect)
+
+        for disparador in disparadores:
+            if screen.get_rect().colliderect(disparador.rect):
+                disparador.draw(screen)
+
         explosiones.draw(screen)
 
         font = pygame.font.Font(None, 36)
@@ -156,7 +184,7 @@ def main():
 
         pygame.display.flip()
 
-        if enemigos_generados == enemigos_por_nivel and len(enemigos) == 0:
+        if enemigos_generados == enemigos_por_nivel and len(enemigos) + len(disparadores) == 0:
             nivel += 1
             enemigos_por_nivel += 4
             velocidad_base += 0.2
