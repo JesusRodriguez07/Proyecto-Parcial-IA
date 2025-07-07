@@ -48,8 +48,8 @@ def mostrar_game_over(screen, puntaje, nivel, joystick=None):
                     esperando = False
                     main()
                 elif event.button == 9:
-                    pygame.quit()
-                    exit()
+                    esperando = False
+                    main()
 
 def mostrar_nivel(screen, nivel, vidas):
     font = pygame.font.Font(None, 64)
@@ -78,7 +78,6 @@ def main():
 
     menu = Menu(screen, joystick)
     action = menu.run()
-
     if action != "start":
         return
 
@@ -118,27 +117,15 @@ def main():
         ahora = pygame.time.get_ticks()
         dx = dy = 0
         keys = pygame.key.get_pressed()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:
-                    esperando = False
-                    main()
-                elif event.key == pygame.K_ESCAPE:
-                    pygame.quit()
-                    exit()
-            elif event.type == pygame.JOYBUTTONDOWN and joystick:
-                if event.button == 1:
-                    esperando = False
-                    main()
-                elif event.button == 9:
-                    pygame.quit()
-                    exit()
-                    paused = True
-                elif event.type == pygame.JOYBUTTONDOWN and event.button == 9:
-                    paused = True
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                paused = True
+            elif event.type == pygame.JOYBUTTONDOWN and event.button == 9:
+                paused = True
 
         if paused:
             opcion = pausa.run()
@@ -168,7 +155,6 @@ def main():
         for i, enemigo in enumerate(enemigos):
             if ahora % 2 == i % 2:
                 enemigo.update()
-
         for disparador in disparadores:
             disparador.update()
 
@@ -201,7 +187,7 @@ def main():
                 if abs(ex - jugador.rect.centerx) > 100 and abs(ey - jugador.rect.centery) > 100:
                     break
 
-            if nivel >= 3 and random.random() < 0.5:
+            if nivel >= 3 and random.random() < 0.2:
                 enemigo = EnemigoConversor(ex, ey, jugador, mapa_vacio, humanos, enemigos)
                 enemigos.add(enemigo)
             elif nivel >= 2 and random.random() < min(0.2 + nivel * 0.05, 0.5):
@@ -242,10 +228,8 @@ def main():
         explosiones.draw(screen)
 
         font = pygame.font.Font(None, 36)
-        texto_puntos = font.render(f"Puntaje: {puntaje}", True, (255, 255, 255))
-        screen.blit(texto_puntos, (10, 10))
-        texto_vidas = font.render(f"Vidas: {vidas}", True, (255, 100, 100))
-        screen.blit(texto_vidas, (10, 40))
+        screen.blit(font.render(f"Puntaje: {puntaje}", True, (255, 255, 255)), (10, 10))
+        screen.blit(font.render(f"Vidas: {vidas}", True, (255, 100, 100)), (10, 40))
         pygame.display.flip()
 
         if enemigos_generados == enemigos_por_nivel and len(enemigos) + len(disparadores) == 0:

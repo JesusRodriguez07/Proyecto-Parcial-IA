@@ -31,23 +31,43 @@ class PauseMenu:
         self.axis_cooldown = 0
 
         while True:
+            clock.tick(60)
             self.draw()
 
-            if self.joystick:
-                # D-pad / hat input
-                if self.joystick.get_numhats() > 0:
-                    hat = self.joystick.get_hat(0)
-                    if self.hat_cooldown == 0:
-                        if hat[1] == 1:
-                            self.selected = (self.selected - 1) % len(self.options)
-                            self.hat_cooldown = 6
-                        elif hat[1] == -1:
-                            self.selected = (self.selected + 1) % len(self.options)
-                            self.hat_cooldown = 6
-                    elif hat[1] == 0:
-                        self.hat_cooldown = max(0, self.hat_cooldown - 1)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
 
-                # Analog stick input
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_UP:
+                        self.selected = (self.selected - 1) % len(self.options)
+                    elif event.key == pygame.K_DOWN:
+                        self.selected = (self.selected + 1) % len(self.options)
+                    elif event.key == pygame.K_RETURN:
+                        return self.resolve_option()
+
+                elif event.type == pygame.JOYBUTTONDOWN and self.joystick:
+                    if event.button == 1:  # Botón A / Cruz
+                        return self.resolve_option()
+                    elif event.button == 9:  # Botón START también confirma
+                        return self.resolve_option()
+
+            # Entrada del D-pad (hat)
+            if self.joystick and self.joystick.get_numhats() > 0:
+                hat = self.joystick.get_hat(0)
+                if self.hat_cooldown == 0:
+                    if hat[1] == 1:
+                        self.selected = (self.selected - 1) % len(self.options)
+                        self.hat_cooldown = 6
+                    elif hat[1] == -1:
+                        self.selected = (self.selected + 1) % len(self.options)
+                        self.hat_cooldown = 6
+                elif hat[1] == 0:
+                    self.hat_cooldown = max(0, self.hat_cooldown - 1)
+
+            # Entrada de stick analógico (eje Y)
+            if self.joystick:
                 axis_y = self.joystick.get_axis(1)
                 if self.axis_cooldown == 0:
                     if axis_y < -0.5:
@@ -59,33 +79,10 @@ class PauseMenu:
                 elif abs(axis_y) < 0.3:
                     self.axis_cooldown = max(0, self.axis_cooldown - 1)
 
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-
-                # Teclado
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_UP:
-                        self.selected = (self.selected - 1) % len(self.options)
-                    elif event.key == pygame.K_DOWN:
-                        self.selected = (self.selected + 1) % len(self.options)
-                    elif event.key == pygame.K_RETURN:
-                        return self._select_option()
-
-                # Gamepad button
-                if event.type == pygame.JOYBUTTONDOWN:
-                    if event.button in [0, 1]:
-                        return self._select_option()
-
-            clock.tick(60)
-
-    def _select_option(self):
+    def resolve_option(self):
         if self.selected == 0:
             return "resume"
         elif self.selected == 1:
             return "menu"
         elif self.selected == 2:
             return "exit"
-
-
