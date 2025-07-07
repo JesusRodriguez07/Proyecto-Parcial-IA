@@ -1,3 +1,6 @@
+# main.py comentado por jesus rodriguez
+
+# Importamos librerías necesarias
 import pygame
 import random
 from scripts.jugador import Jugador
@@ -10,16 +13,21 @@ from scripts.enemigo_conversor import EnemigoConversor
 from scripts.explosion import Explosion
 from scripts.humano import Humano
 
+# Muestra la pantalla de Game Over cuando el jugador pierde todas sus vidas
 def mostrar_game_over(screen, puntaje, nivel, joystick=None):
     font = pygame.font.Font(None, 72)
     texto = font.render("GAME OVER", True, (255, 0, 0))
     texto2 = pygame.font.Font(None, 36).render("Presiona [R] para reiniciar o [ESC] para salir", True, (255, 255, 255))
     texto_puntaje = font.render(f"Puntaje: {puntaje}", True, (255, 255, 0))
     texto_nivel = font.render(f"Nivel: {nivel}", True, (255, 200, 0))
+
+    # Centramos los textos
     rect = texto.get_rect(center=(400, 180))
     rect2 = texto2.get_rect(center=(400, 420))
     rect_puntaje = texto_puntaje.get_rect(center=(400, 250))
     rect_nivel = texto_nivel.get_rect(center=(400, 320))
+
+    # Dibujamos los textos en pantalla
     screen.fill((0, 0, 0))
     screen.blit(texto, rect)
     screen.blit(texto_puntaje, rect_puntaje)
@@ -27,6 +35,7 @@ def mostrar_game_over(screen, puntaje, nivel, joystick=None):
     screen.blit(texto2, rect2)
     pygame.display.flip()
 
+    # Espera de interacción del jugador para reiniciar o salir
     esperando = True
     while esperando:
         for event in pygame.event.get():
@@ -41,13 +50,11 @@ def mostrar_game_over(screen, puntaje, nivel, joystick=None):
                     pygame.quit()
                     exit()
             elif event.type == pygame.JOYBUTTONDOWN and joystick:
-                if event.button == 1:
-                    esperando = False
-                    main()
-                elif event.button == 9:
+                if event.button == 1 or event.button == 9:
                     esperando = False
                     main()
 
+# Muestra el número de nivel actual y cantidad de vidas en pantalla
 def mostrar_nivel(screen, nivel, vidas):
     font = pygame.font.Font(None, 64)
     texto = font.render(f"Nivel {nivel}", True, (255, 255, 0))
@@ -58,27 +65,28 @@ def mostrar_nivel(screen, nivel, vidas):
     screen.blit(texto, rect)
     screen.blit(texto_vidas, rect_vidas)
     pygame.display.flip()
-    pygame.time.delay(2000)
+    pygame.time.delay(2000)  # Espera de 2 segundos
 
+# Función principal que ejecuta todo el juego
 def main():
     pygame.init()
     screen = pygame.display.set_mode((800, 600))
     pygame.display.set_caption("Robotron IA - Examen Final")
     clock = pygame.time.Clock()
 
+    # Inicialización de audio y música
     pygame.mixer.init()
-
-    # 🎵 Música de fondo
     pygame.mixer.music.load("assets/music/fondo.ogg")
     pygame.mixer.music.set_volume(0.1)
     pygame.mixer.music.play(-1)
 
-    # 🔊 Efectos
+    # Carga de efectos de sonido
     sonido_disparo = pygame.mixer.Sound("assets/sounds/disparo.wav")
     sonido_explosion = pygame.mixer.Sound("assets/sounds/explosion.wav")
     sonido_golpe = pygame.mixer.Sound("assets/sounds/golpe.wav")
     sonido_rescate = pygame.mixer.Sound("assets/sounds/rescate.wav")
 
+    # Inicialización del joystick si está disponible
     pygame.joystick.init()
     joystick = None
     if pygame.joystick.get_count() > 0:
@@ -86,11 +94,13 @@ def main():
         joystick.init()
         print(f"Gamepad detectado: {joystick.get_name()}")
 
+    # Mostrar menú principal
     menu = Menu(screen, joystick)
     action = menu.run()
     if action != "start":
         return
 
+    # Inicialización de variables de juego
     nivel = 1
     jugador = Jugador(400, 300)
     bullets = pygame.sprite.Group()
@@ -109,6 +119,7 @@ def main():
 
     mostrar_nivel(screen, nivel, vidas)
 
+    # Generación inicial de humanos
     for _ in range(random.randint(3, 5)):
         while True:
             hx = random.randint(50, 750)
@@ -117,17 +128,20 @@ def main():
                 break
         humanos.add(Humano(hx, hy))
 
+    # Variables de control
     tiempo_ultimo_spawn = pygame.time.get_ticks()
     enemigos_generados = 0
     paused = False
     running = True
 
+    # Bucle principal del juego
     while running:
-        clock.tick(60)
+        clock.tick(60)  # 60 FPS
         ahora = pygame.time.get_ticks()
         dx = dy = 0
         keys = pygame.key.get_pressed()
 
+        # Manejo de eventos
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -137,6 +151,7 @@ def main():
             elif event.type == pygame.JOYBUTTONDOWN and event.button == 9:
                 paused = True
 
+        # Menú de pausa
         if paused:
             opcion = pausa.run()
             if opcion == "resume":
@@ -149,32 +164,38 @@ def main():
                 running = False
                 break
 
+        # Movimiento por teclado
         if keys[pygame.K_LEFT]: dx = -1
         if keys[pygame.K_RIGHT]: dx = 1
         if keys[pygame.K_UP]: dy = -1
         if keys[pygame.K_DOWN]: dy = 1
 
+        # Movimiento por joystick
         if joystick:
             axis_x = joystick.get_axis(0)
             axis_y = joystick.get_axis(1)
             if abs(axis_x) > 0.3: dx = int(axis_x / abs(axis_x))
             if abs(axis_y) > 0.3: dy = int(axis_y / abs(axis_y))
 
+        # Actualización del jugador
         jugador.update(keys, dx, dy, bullets, joystick)
         if jugador.disparo_realizado:
             sonido_disparo.play()
 
+        # Actualización de enemigos
         for i, enemigo in enumerate(enemigos):
             if ahora % 2 == i % 2:
                 enemigo.update()
         for disparador in disparadores:
             disparador.update()
 
+        # Actualización de sprites
         bullets.update()
         balas_enemigas.update()
         explosiones.update()
         humanos.update()
 
+        # Colisiones del jugador con enemigos o balas enemigas
         impacto_jugador = pygame.sprite.spritecollide(jugador, balas_enemigas, dokill=True)
         contacto_enemigo = pygame.sprite.spritecollide(jugador, enemigos, dokill=True)
         if contacto_enemigo or impacto_jugador:
@@ -185,16 +206,19 @@ def main():
                 mostrar_game_over(screen, puntaje, nivel, joystick)
                 running = False
 
+        # Rescate de humanos
         rescatados = pygame.sprite.spritecollide(jugador, humanos, dokill=True)
         puntaje += 1000 * len(rescatados)
         if rescatados:
             sonido_rescate.play()
 
+        # Eliminación de humanos por enemigos
         for enemigo in enemigos:
             pygame.sprite.spritecollide(enemigo, humanos, dokill=True)
         for disparador in disparadores:
             pygame.sprite.spritecollide(disparador, humanos, dokill=True)
 
+        # Generación progresiva de enemigos
         if enemigos_generados < enemigos_por_nivel and ahora - tiempo_ultimo_spawn > 600:
             while True:
                 ex = random.randint(50, 750)
@@ -202,6 +226,7 @@ def main():
                 if abs(ex - jugador.rect.centerx) > 100 and abs(ey - jugador.rect.centery) > 100:
                     break
 
+            # Escoge tipo de enemigo según nivel
             if nivel >= 3 and random.random() < 0.2:
                 enemigo = EnemigoConversor(ex, ey, jugador, mapa_vacio, humanos, enemigos)
                 enemigos.add(enemigo)
@@ -216,6 +241,7 @@ def main():
             enemigos_generados += 1
             tiempo_ultimo_spawn = ahora
 
+        # Colisión de balas con enemigos
         for bullet in bullets:
             impactos = pygame.sprite.spritecollide(bullet, enemigos, dokill=True)
             for enemigo in impactos:
@@ -228,6 +254,7 @@ def main():
                 explosiones.add(Explosion(enemigo.rect.centerx, enemigo.rect.centery))
                 bullet.kill()
 
+        # Dibujar en pantalla
         screen.fill((0, 0, 0))
         screen.blit(jugador.image, jugador.rect)
         humanos.draw(screen)
@@ -249,6 +276,7 @@ def main():
         screen.blit(font.render(f"Vidas: {vidas}", True, (255, 100, 100)), (10, 40))
         pygame.display.flip()
 
+        # Avance de nivel
         if enemigos_generados == enemigos_por_nivel and len(enemigos) + len(disparadores) == 0:
             nivel += 1
             enemigos_por_nivel += 4
@@ -257,6 +285,7 @@ def main():
             enemigos_generados = 0
             tiempo_ultimo_spawn = pygame.time.get_ticks()
 
+            # Generación de nuevos humanos
             humanos.empty()
             for _ in range(random.randint(3, 5)):
                 while True:
@@ -266,5 +295,6 @@ def main():
                         break
                 humanos.add(Humano(hx, hy))
 
+# Ejecuta el juego si se corre como script principal
 if __name__ == "__main__":
     main()
