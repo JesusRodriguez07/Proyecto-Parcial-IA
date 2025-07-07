@@ -20,8 +20,11 @@ class Jugador(pygame.sprite.Sprite):
         self.speed = 5
         self.last_shot = 0
         self.shot_delay = 200
+        self.disparo_realizado = False  # ← Añadido para que el main reproduzca sonido
 
     def update(self, keys, dx, dy, bullets_group, joystick):
+        self.disparo_realizado = False  # ← Se reinicia cada frame
+
         if abs(dx) < 0.1: dx = 0
         if abs(dy) < 0.1: dy = 0
 
@@ -34,7 +37,7 @@ class Jugador(pygame.sprite.Sprite):
         self.rect.x += int(dx * self.speed)
         self.rect.y += int(dy * self.speed)
 
-        # ❗ Limitar dentro de pantalla (800x600)
+        # Limitar dentro de pantalla
         self.rect.x = max(0, min(self.rect.x, 800 - self.rect.width))
         self.rect.y = max(0, min(self.rect.y, 600 - self.rect.height))
 
@@ -55,8 +58,4 @@ class Jugador(pygame.sprite.Sprite):
                 bullet = Bullet(self.rect.centerx, self.rect.centery, direction)
                 bullets_group.add(bullet)
                 self.last_shot = now
-
-
-
-
-
+                self.disparo_realizado = True  # ← ¡Señal para reproducir el sonido!

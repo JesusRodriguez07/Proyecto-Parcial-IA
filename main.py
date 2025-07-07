@@ -1,6 +1,3 @@
-# main.py actualizado con disparadores usando grupo global de balas
-# Autor: jesus rodriguez - 12-sisn-2-043
-
 import pygame
 import random
 from scripts.jugador import Jugador
@@ -9,8 +6,8 @@ from scripts.menu import Menu
 from scripts.pause_menu import PauseMenu
 from scripts.enemigo import Enemigo
 from scripts.enemigo_disparo import EnemigoDisparo
-from scripts.explosion import Explosion
 from scripts.enemigo_conversor import EnemigoConversor
+from scripts.explosion import Explosion
 from scripts.humano import Humano
 
 def mostrar_game_over(screen, puntaje, nivel, joystick=None):
@@ -68,6 +65,19 @@ def main():
     screen = pygame.display.set_mode((800, 600))
     pygame.display.set_caption("Robotron IA - Examen Final")
     clock = pygame.time.Clock()
+
+    pygame.mixer.init()
+
+    # 🎵 Música de fondo
+    pygame.mixer.music.load("assets/music/fondo.ogg")
+    pygame.mixer.music.set_volume(0.1)
+    pygame.mixer.music.play(-1)
+
+    # 🔊 Efectos
+    sonido_disparo = pygame.mixer.Sound("assets/sounds/disparo.wav")
+    sonido_explosion = pygame.mixer.Sound("assets/sounds/explosion.wav")
+    sonido_golpe = pygame.mixer.Sound("assets/sounds/golpe.wav")
+    sonido_rescate = pygame.mixer.Sound("assets/sounds/rescate.wav")
 
     pygame.joystick.init()
     joystick = None
@@ -151,6 +161,8 @@ def main():
             if abs(axis_y) > 0.3: dy = int(axis_y / abs(axis_y))
 
         jugador.update(keys, dx, dy, bullets, joystick)
+        if jugador.disparo_realizado:
+            sonido_disparo.play()
 
         for i, enemigo in enumerate(enemigos):
             if ahora % 2 == i % 2:
@@ -166,6 +178,7 @@ def main():
         impacto_jugador = pygame.sprite.spritecollide(jugador, balas_enemigas, dokill=True)
         contacto_enemigo = pygame.sprite.spritecollide(jugador, enemigos, dokill=True)
         if contacto_enemigo or impacto_jugador:
+            sonido_golpe.play()
             vidas -= 1
             explosiones.add(Explosion(jugador.rect.centerx, jugador.rect.centery))
             if vidas <= 0:
@@ -174,6 +187,8 @@ def main():
 
         rescatados = pygame.sprite.spritecollide(jugador, humanos, dokill=True)
         puntaje += 1000 * len(rescatados)
+        if rescatados:
+            sonido_rescate.play()
 
         for enemigo in enemigos:
             pygame.sprite.spritecollide(enemigo, humanos, dokill=True)
@@ -204,10 +219,12 @@ def main():
         for bullet in bullets:
             impactos = pygame.sprite.spritecollide(bullet, enemigos, dokill=True)
             for enemigo in impactos:
+                sonido_explosion.play()
                 explosiones.add(Explosion(enemigo.rect.centerx, enemigo.rect.centery))
                 bullet.kill()
             impactos2 = pygame.sprite.spritecollide(bullet, disparadores, dokill=True)
             for enemigo in impactos2:
+                sonido_explosion.play()
                 explosiones.add(Explosion(enemigo.rect.centerx, enemigo.rect.centery))
                 bullet.kill()
 
