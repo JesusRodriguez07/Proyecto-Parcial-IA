@@ -1,4 +1,5 @@
 # a_estrella.py comentado por jesus rodriguez
+# Autor: jesus rodriguez - 12-sisn-2-043
 
 # Importamos la librería heapq para usar una cola de prioridad (min-heap)
 import heapq

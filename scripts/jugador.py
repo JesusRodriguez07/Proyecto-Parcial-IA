@@ -1,5 +1,6 @@
 import pygame
 from scripts.bala import Bullet  # Importa la clase Bullet para disparar proyectiles
+# Autor: jesus rodriguez - 12-sisn-2-043
 
 # Clase Jugador: controla al personaje principal del juego
 class Jugador(pygame.sprite.Sprite):

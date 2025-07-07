@@ -1,4 +1,5 @@
 # Clase base abstracta para todos los nodos del árbol de comportamiento
+# Autor: jesus rodriguez - 12-sisn-2-043
 class Nodo:
     def ejecutar(self):
         # Método abstracto, debe ser implementado por todas las subclases

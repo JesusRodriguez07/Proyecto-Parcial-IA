@@ -1,6 +1,7 @@
 import pygame
 
 # Clase Explosion: representa una animación breve cuando un enemigo es destruido
+# Autor: jesus rodriguez - 12-sisn-2-043
 class Explosion(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()  # Inicializa como un sprite

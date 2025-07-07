@@ -1,4 +1,5 @@
 # main.py comentado por jesus rodriguez
+# Autor: jesus rodriguez - 12-sisn-2-043
 
 # Importamos librerías necesarias
 import pygame

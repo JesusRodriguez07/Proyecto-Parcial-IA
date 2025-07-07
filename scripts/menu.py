@@ -2,6 +2,7 @@ import pygame
 import sys
 
 # Clase Menu: muestra el menú inicial del juego con control por teclado o joystick
+# Autor: jesus rodriguez - 12-sisn-2-043
 class Menu:
     def __init__(self, screen, joystick=None):
         self.screen = screen  # Superficie donde se dibuja el menú

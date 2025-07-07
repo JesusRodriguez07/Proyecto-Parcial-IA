@@ -2,6 +2,7 @@ import pygame
 import sys
 
 # Clase PauseMenu: muestra un menú cuando el juego está pausado
+# Autor: jesus rodriguez - 12-sisn-2-043
 class PauseMenu:
     def __init__(self, screen, joystick):
         self.screen = screen              # Pantalla donde se dibuja
